@@ -1,11 +1,10 @@
 package ct;
-
+import java.util.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+
 
 //used in add method
 public class Object_functions {
@@ -131,6 +130,39 @@ public class Object_functions {
 		}
 		
 		return parent_commit_hash;
+	}
+	
+	public String extract_commit_content(File ctdir, String commitHash) {
+		String folderName = commitHash.substring(0,2); 
+		String fileName = commitHash.substring(2); 
+		byte[] fullData = null;
+		File myCommitFile = new File(ctdir, "objects/"+folderName+"/"+fileName);
+		if(!myCommitFile.exists()) {
+			return null;
+		}
+		try {
+			//extracting the contents from the commit object and stroing it as binaryt file to not lose any data if the obejct is like png or .class file etc
+			fullData = Files.readAllBytes(myCommitFile.toPath());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			System.out.println("Error reading the commit file "+e.getMessage());
+		}
+		int nullIndex = -1;
+		for(int i=0;i<fullData.length;i++) {
+			if(fullData[i] == 0) {
+				nullIndex = i;
+				break;
+			}
+		}
+		byte[] contentBytes = Arrays.copyOfRange(fullData, nullIndex+1, fullData.length);
+		String content = new String(contentBytes, java.nio.charset.StandardCharsets.UTF_8);
+		return content;
+//		if(nullIndex != -1) {
+//			String header = new String(fullData, 0, nullIndex, java.nio.charset.StandardCharsets.UTF_8);
+//			String content = new String(fullData, nullIndex+1, fullData.length-(nullIndex+1),java.nio.charset.StandardCharsets.UTF_8);
+//			
+//		}
 	}
 
 }

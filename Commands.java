@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.*;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -121,5 +122,61 @@ public class Commands {
 			System.out.println("Error updating main branch: "+e.getMessage());
 		}
 		System.out.println("[" + commitHash.substring(0, 7) + "] " + commit_msg);
+	}
+	
+	public void log() {
+		File currentCommitaccess = new File(ctdir, "refs/heads/main");
+		if(!currentCommitaccess.exists()) {
+			System.out.println("fatal: your current branch 'main' does not have any commits yet");
+			return;
+		}
+		String currCommitHash = null;
+		try {
+			currCommitHash = Files.readString(currentCommitaccess.toPath());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			System.out.println("Error while accessing the commit hash from refs/heads/main: "+e.getMessage());
+		}
+		while(currCommitHash != null && !currCommitHash.isEmpty()) {
+			String commitContent = obj_funcs.extract_commit_content(ctdir, currCommitHash);
+			if(commitContent == null) {
+				System.out.println("Error: Corrupted commit object " + currCommitHash);
+	            break;
+			}
+			String parentHash = null;
+			String author = "";
+			String date = "";
+			StringBuilder message = new StringBuilder();
+			boolean readingMessage = false;
+			String[] lines = commitContent.split("\n");
+			for(String line:lines) {
+				if(readingMessage) {
+					message.append(line).append("\n");
+				}
+				else if(line.isEmpty()) {
+					readingMessage = true;
+				}
+				else if(line.startsWith("parent ")) {
+					parentHash = line.substring("parent ".length()).trim();
+				}
+				else if(line.startsWith("author ")) {
+					author = line.substring("author ".length()).trim();
+				}
+				else if(line.startsWith("date ")) {
+					date = line.substring("date ".length()).trim();
+				}
+			}
+			
+			System.out.println("commit "+currCommitHash);
+			if(!author.isEmpty()) System.out.println("Author:  "+author);
+			if(!date.isEmpty()) System.out.println("Date:  "+date);
+			System.out.println("\n   "+message.toString().trim()+"\n");
+			
+			currCommitHash = parentHash;
+			
+		}
+		
+		
 	}
 }

@@ -36,6 +36,10 @@ public class Main {
 			}
 		}
 		
+		if(args[0].equals("log")) {
+			cmd.log();
+		}
+		
 	}
 
 }
