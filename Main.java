@@ -18,7 +18,6 @@ public class Main {
 		}
 		
 		if(args[0].equals("init")) {
-			
 			cmd.init();
 		}
 //		else {
@@ -28,6 +27,15 @@ public class Main {
 		if(args[0].equals("add") && args.length >= 2) {
 			cmd.add(args[1]);
 		}
+		
+		if(args[0].equals("commit")) {
+			if(args.length >= 3 && args[1].equals("-m")) {
+				cmd.commit(args[2]);
+			}else {
+				System.out.println("Usage: ct commit -m\"<commit-message>\"");
+			}
+		}
+		
 	}
 
 }

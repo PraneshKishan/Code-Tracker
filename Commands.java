@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.*;
 import java.io.FileReader;
 import java.io.BufferedReader;
 
@@ -85,5 +86,40 @@ public class Commands {
 			System.out.println("The "+fileName+" does not exists!");
 		}
 	}
-
+	
+	public String tree_obj() {
+		Map<String, String> indexMap = indexing_obj.indexFileintoMap();
+		if(indexMap.isEmpty()) {
+			System.out.println("Nothing to commit, working tree clean");
+			return null;
+		}
+		//Job A - creating a tree structure
+		TreeNode treeNodeHelper = new TreeNode();
+		TreeNode root = treeNodeHelper.createTree(indexMap);
+		//Job B - creating the hashing and writing obejcts for the whole tree
+		String treeHash = treeNodeHelper.createTreeObject(root);
+		return treeHash;
+		
+	}
+	
+	public void commit(String commit_msg) {
+		String treeHash = tree_obj();
+		if(treeHash == null) return;
+		
+		String parent_commit_hash = obj_funcs.checkParentCommit(ctdir);
+		byte[] contentBytes = obj_funcs.commitFileGen(treeHash, parent_commit_hash, commit_msg);
+		byte[] fullPayLoadBytes = obj_funcs.commitPayLoadGen(contentBytes);
+		String commitHash = hashing_obj.generate_hash(fullPayLoadBytes);
+		obj_funcs.storeInObjects(commitHash, fullPayLoadBytes);
+		File mainBranchFile = new File(ctdir, "refs/heads/main");
+		try {
+			if (mainBranchFile.getParentFile() != null) {
+	            mainBranchFile.getParentFile().mkdirs();
+	        }
+			java.nio.file.Files.writeString(mainBranchFile.toPath(), commitHash);
+		}catch(IOException e) {
+			System.out.println("Error updating main branch: "+e.getMessage());
+		}
+		System.out.println("[" + commitHash.substring(0, 7) + "] " + commit_msg);
+	}
 }
