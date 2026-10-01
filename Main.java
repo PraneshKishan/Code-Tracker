@@ -49,6 +49,10 @@ public class Main {
 			}
 			cmd.checkout(new File(".ct"), args[1]);
 		}
+		
+		if(args[0].equals("status")) {
+			cmd.status();
+		}
 	}
 
 }

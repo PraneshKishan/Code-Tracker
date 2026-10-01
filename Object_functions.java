@@ -197,4 +197,31 @@ public class Object_functions {
 		return targetFiles;
 		
 	}
+	
+	public Map<String, String> getCommitFilesToMap(File ctdir) {
+		Map<String, String> commit_files_map = new HashMap<>();
+		
+		String parent_commit_hash = checkParentCommit(ctdir);
+		if(parent_commit_hash == null || parent_commit_hash.isEmpty()) {
+			return commit_files_map;
+		}
+		String commit_content = extract_commit_content(ctdir, parent_commit_hash);
+		if(commit_content == null) {
+			return commit_files_map;
+		}
+		String rootTreeHash = null;
+		String[] lines = commit_content.split("\n");
+		for(String line : lines) {
+			if(line.startsWith("tree ")) {
+				rootTreeHash = line.substring(5).trim();
+				break;
+			}
+		}
+		
+		if(rootTreeHash != null) {
+			commit_files_map = collectTreeFiles(ctdir, rootTreeHash,"", new HashMap<>());
+		}
+		
+		return commit_files_map;
+	}
 }

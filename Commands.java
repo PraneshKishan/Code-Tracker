@@ -14,6 +14,8 @@ public class Commands {
 	Object_functions obj_funcs = new Object_functions();
 	Hash_for_ct hashing_obj = new Hash_for_ct();
 	Indexing indexing_obj = new Indexing();
+	Status_checks status_obj = new Status_checks();
+	Local_file_operations local_file_ope_obj = new Local_file_operations();
 	
 	File ctdir = new File(".ct");
 	File workingDir = ctdir.getAbsoluteFile().getParentFile();
@@ -238,6 +240,68 @@ public class Commands {
 			System.out.println("Error Updating branch ref: "+e.getMessage());
 		}
 		
-
 	}
+	
+	public void status() {
+		Map<String, String> index_file_map = indexing_obj.indexFileintoMap();
+		Map<String, String> commit_file_map = obj_funcs.getCommitFilesToMap(ctdir);
+		List<String> localFiles = local_file_ope_obj.scanLocalFiles(workingDir, "", new ArrayList<>());
+		
+		//comparison A
+		List<String> new_file_arr = status_obj.new_file_check(index_file_map, commit_file_map);
+		List<String> modified_file_arr = status_obj.modified_check(index_file_map, commit_file_map);
+		List<String> deleted_file_arr = status_obj.deleted_check(index_file_map, commit_file_map);
+		//comparison B
+		List<String> untracked_arr = status_obj.untracked_check(index_file_map, localFiles);
+		List<String> modified_local_file_arr = status_obj.modified_local_check(workingDir, index_file_map);
+		List<String> deleted_local_file_arr = status_obj.deleted_local_check(workingDir, index_file_map);
+		
+		boolean clean = true;
+		
+		if(!new_file_arr.isEmpty() || !modified_file_arr.isEmpty() || !deleted_file_arr.isEmpty()) {
+			clean = false;
+			System.out.println("Changes to be committed");
+			System.out.println(" (use \"ct commit -m <msg>\" to commit");
+			for(String file : new_file_arr) {
+				System.out.println("\tnew file:  "+file);
+			}
+			for(String file : modified_file_arr) {
+				System.out.println("\tmodified:  "+file);
+			}
+			for(String file : modified_file_arr) {
+				System.out.println("\tdeleted:  "+file);
+			}
+			System.out.println();
+		}
+		if(!new_file_arr.isEmpty() || !modified_file_arr.isEmpty() || !deleted_file_arr.isEmpty()) {
+		    clean = false;
+		    System.out.println("Changes to be committed:");
+		    System.out.println("  (use \"ct commit -m <msg>\" to commit)");
+		    for(String file : new_file_arr) {
+		        System.out.println("\tnew file:   " + file);
+		    }
+		    for(String file : modified_file_arr) {
+		        System.out.println("\tmodified:   " + file);
+		    }
+		    for(String file : deleted_file_arr) {   // <--- FIXED to deleted_file_arr
+		        System.out.println("\tdeleted:    " + file);
+		    }
+		    System.out.println();
+		}
+		if(!untracked_arr.isEmpty()) {
+			clean = false;
+			System.out.println("Untracked file:");
+			System.out.println(" (use\"ct add <file>...\" to include in what will be committed");
+			for(String file : untracked_arr) {
+				System.out.println("\t"+file);
+			}
+			System.out.println();
+		}
+		
+		if(clean) {
+			System.out.println("nothing to commit, working tree clean");
+		}
+		
+	}
+	
 }
