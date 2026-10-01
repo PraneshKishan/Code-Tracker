@@ -1,4 +1,4 @@
-# ⚡ CodeTracker (`ct`)
+# ⚡ CodeTracker
 
 > Ever wondered what Git actually does under the hood? I stopped wondering and built it from scratch in pure Java.
 
