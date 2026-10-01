@@ -9,7 +9,9 @@ import java.io.BufferedReader;
 
 public class Main {
 	public static void main(String[] args) {
+		System.out.println("DEBUG: args[0]=" + (args.length > 0 ? args[0] : "none"));
 		Commands cmd = new Commands();
+		
 		
 		//Guard against no input
 		if(args.length == 0) {
@@ -40,6 +42,13 @@ public class Main {
 			cmd.log();
 		}
 		
+		if(args[0].equals("checkout")) {
+			if(args.length < 2) {
+				System.out.println("fatal: commit hash required!");
+				return;
+			}
+			cmd.checkout(new File(".ct"), args[1]);
+		}
 	}
 
 }

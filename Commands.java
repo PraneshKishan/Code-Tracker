@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.Map.Entry;
 import java.io.FileReader;
 import java.io.BufferedReader;
 
@@ -15,6 +16,7 @@ public class Commands {
 	Indexing indexing_obj = new Indexing();
 	
 	File ctdir = new File(".ct");
+	File workingDir = ctdir.getAbsoluteFile().getParentFile();
 	
 	public void init() {
 
@@ -77,7 +79,7 @@ public class Commands {
 				String hash = hashing_obj.generate_hash(fullPayloadBytes);
 				if (hash == null) return;
 				obj_funcs.storeInObjects(hash, fullPayloadBytes);
-				indexing_obj.staging_area(target.getPath(), hash);
+				indexing_obj.staging_area(target.toPath().normalize().toString(), hash);
 				
 			}
 			else {
@@ -176,7 +178,66 @@ public class Commands {
 			currCommitHash = parentHash;
 			
 		}
+	}
+	
+	public void checkout(File ctdir, String target_commit_hash) {
+		//Extracting root tree hash from commit object's content
+		String commit_content = obj_funcs.extract_commit_content(ctdir, target_commit_hash);
+		if(commit_content == null) {
+			System.out.println("The commits' content is empty!");
+			return;
+		}
+		String lines[] = commit_content.split("\n");
+		String rootTreeHash = null;
 		
+		for(String line : lines) {
+			if(line.startsWith("tree ")) {
+				rootTreeHash = line.substring(5).trim();
+			}
+		}
+		if(rootTreeHash == null) {
+			System.out.println("Root tree's hash is null!");
+			return;
+		}
 		
+		//Top-down recursion
+		Map<String, String> target_files_map = obj_funcs.collectTreeFiles(ctdir, rootTreeHash, "", new HashMap<String, String>());
+		//delete removed tracked files
+		Map<String, String> index_file_map = indexing_obj.indexFileintoMap();
+		for(String keys : index_file_map.keySet()) {
+			if(!target_files_map.containsKey(keys)) {
+				new File(workingDir, keys).delete();
+			}
+		}
+		//restore or overwrite files
+		for(Entry<String, String> entry : target_files_map.entrySet()) {
+			String relativePath = entry.getKey();
+			String blobHash = entry.getValue();
+			String blob_content = obj_funcs.extract_commit_content(ctdir, blobHash);
+			File targetFile = new File(workingDir, relativePath);
+			if(targetFile.getParentFile() != null) {
+				targetFile.getParentFile().mkdirs();
+			}
+			
+			try {
+				Files.writeString(targetFile.toPath(), blob_content);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+//				e.printStackTrace();
+				System.out.print("Overwriting or updating file has met an error in checkout!"+e.getMessage());
+			}	
+		}
+		indexing_obj.writeMaptoIndex(target_files_map);
+		
+		File mainref = new File(ctdir, "refs/heads/main");
+		try {
+			Files.writeString(mainref.toPath(), target_commit_hash);
+			System.out.println("Switched to commit: "+target_commit_hash.substring(0,7));
+			
+		}catch(IOException e) {
+			System.out.println("Error Updating branch ref: "+e.getMessage());
+		}
+		
+
 	}
 }

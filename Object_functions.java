@@ -155,6 +155,10 @@ public class Object_functions {
 				break;
 			}
 		}
+		
+		if(fullData == null || nullIndex == -1) {
+			return null;
+		}
 		byte[] contentBytes = Arrays.copyOfRange(fullData, nullIndex+1, fullData.length);
 		String content = new String(contentBytes, java.nio.charset.StandardCharsets.UTF_8);
 		return content;
@@ -164,5 +168,33 @@ public class Object_functions {
 //			
 //		}
 	}
-
+	
+	public Map<String, String> collectTreeFiles(File ctdir, String rootTreeHash, String currentPath, Map<String, String> targetFiles){
+		String tree_content = extract_commit_content(ctdir, rootTreeHash);
+		if(tree_content == null || tree_content.isEmpty()) {
+			System.out.println("Root tree object's content is empty or null !!");
+			return null;
+		}
+		String[] lines = tree_content.split("\n");
+		String fullRelativePath = null;
+		
+		for(String line : lines) {
+			line = line.trim();
+			if(line.isEmpty()) continue;
+			String[] parts = line.split(" ",3);
+			if(currentPath.isEmpty()) {
+				fullRelativePath = parts[2];
+			}else {
+				fullRelativePath = currentPath+"/"+parts[2];
+			}
+			if(parts[0].equals("blob")) {
+				targetFiles.put(fullRelativePath, parts[1]);
+			}
+			else if(parts[0].equals("tree")) {
+				collectTreeFiles(ctdir, parts[1], fullRelativePath, targetFiles);
+			}
+		}
+		return targetFiles;
+		
+	}
 }

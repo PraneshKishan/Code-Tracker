@@ -7,30 +7,12 @@ import java.util.*;
 public class Indexing {
 	public void staging_area(String target, String hash) {
 		Map<String, String> parsedIndexMap = indexFileintoMap();
-		final File indexfile = new File(".ct","index.json");
 		String normalizedPath = target.replace("\\", "/");
 		parsedIndexMap.put(normalizedPath, hash);
-		StringBuilder json = new StringBuilder();
-		json.append("{\n");
-		int count = 0;
-		for(Map.Entry<String, String> entry : parsedIndexMap.entrySet()) {
-			json.append("  \"").append(entry.getKey()).append("\": \"").append(entry.getValue()).append("\"");
-			count++;
-			if(count < parsedIndexMap.size()) {
-				json.append(",");
-			}
-			json.append("\n");
-		}
-		json.append("}\n");
-		try {
-			java.nio.file.Files.writeString(indexfile.toPath(), json.toString());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-//			e.printStackTrace();
-			System.out.println("Error while writing json file: "+e);
-		}
-		
+		writeMaptoIndex(parsedIndexMap);
 	}
+	
+	
 	public Map<String, String> indexFileintoMap(){
 		Map<String, String> indexMap = new HashMap<>();
 		File indexfile = new File(".ct","index.json");
@@ -55,6 +37,28 @@ public class Indexing {
 			}
 		}
 		return indexMap;
+	}
+	public void writeMaptoIndex(Map<String, String> map) {
+		final File indexfile = new File(".ct","index.json");
+		StringBuilder json = new StringBuilder();
+		json.append("{\n");
+		int count = 0;
+		for(Map.Entry<String, String> entry : map.entrySet()) {
+			json.append("  \"").append(entry.getKey()).append("\": \"").append(entry.getValue()).append("\"");
+			count++;
+			if(count < map.size()) {
+				json.append(",");
+			}
+			json.append("\n");
+		}
+		json.append("}\n");
+		try {
+			java.nio.file.Files.writeString(indexfile.toPath(), json.toString());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			System.out.println("Error while writing json file: "+e);
+		}
 	}
 
 }
